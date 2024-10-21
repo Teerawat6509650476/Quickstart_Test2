@@ -1,31 +1,38 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: Node.js Multi-OS CI
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [main]
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+        os: [ubuntu-latest, windows-latest]  
+        node-version: [18.x, 20.x, 22.x]    # ทดสอบบน Node.js เวอร์ชัน 18, 20, และ 22
+    runs-on: ${{ matrix.os}}
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Check OS information
+      run: cat /etc/*-release  # แสดงข้อมูลของ OS
+
+    - name: Checkout the code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      run: npm ci  # ใช้ npm ci แทน npm install เพื่อการติดตั้งที่รวดเร็วและเชื่อถือได้
+
+    - name: Build the project
+      run: npm run build --if-present  # รันการ build หากมี script นี้
+
+    - name: Run tests
+      run: npm test  # รันชุดทดสอบเพื่อยืนยันการทำงานของแอปพลิเคชัน
+
